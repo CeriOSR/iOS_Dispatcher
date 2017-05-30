@@ -20,12 +20,12 @@ class AddUserController: UIViewController {
         }
     }
 
-    let emailTextField: UITextField = {
+    let phoneTextField: UITextField = {
         let tf = UITextField()
-        tf.keyboardType = .emailAddress
+        tf.keyboardType = .phonePad
         tf.autocorrectionType = .no
         tf.autocapitalizationType = .none
-        tf.placeholder = "email"
+        tf.placeholder = "phone #"
         tf.borderStyle = .roundedRect
         tf.layer.cornerRadius = 6.0
         tf.layer.masksToBounds = true
@@ -62,15 +62,15 @@ class AddUserController: UIViewController {
     }
     
     func setupViews() {
-        view.addSubview(emailTextField)
+        view.addSubview(phoneTextField)
         view.addSubview(trackerIdTextField)
         view.addSubview(addUserButton)
         
-        view.addConstraintsWithVisualFormat(format: "H:|-10-[v0]-10-|", views: emailTextField)
+        view.addConstraintsWithVisualFormat(format: "H:|-10-[v0]-10-|", views: phoneTextField)
         view.addConstraintsWithVisualFormat(format: "H:|-10-[v0]-10-|", views: trackerIdTextField)
         view.addConstraintsWithVisualFormat(format: "H:|-130-[v0(100)]", views: addUserButton)
 
-        view.addConstraintsWithVisualFormat(format: "V:|-100-[v0(40)]-10-[v1(40)]-50-[v2(40)]", views: emailTextField, trackerIdTextField, addUserButton)
+        view.addConstraintsWithVisualFormat(format: "V:|-100-[v0(40)]-10-[v1(40)]-50-[v2(40)]", views: phoneTextField, trackerIdTextField, addUserButton)
 
 
     }
@@ -86,13 +86,13 @@ class AddUserController: UIViewController {
     func handleAddUser() {
         checkIfEmailTextFieldIsEmpty()
         guard let uid = Auth.auth().currentUser?.uid else {return}
-        guard let email = emailTextField.text else {return}
+        guard let phone = phoneTextField.text else {return}
         let pendingRef = Database.database().reference().child("CER_Pending_Drivers")
         pendingRef.observe(.childAdded, with: { (snapshot) in
-            self.driver.email = snapshot.value as? String
-            self.driver.userId = snapshot.key
-            guard let driverId = self.driver.userId else {return}
-            if email == snapshot.value as? String {
+            if phone == snapshot.value as? String {
+                self.driver.phone = snapshot.value as? String
+                self.driver.userId = snapshot.key
+                guard let driverId = self.driver.userId else {return}
                 let userRef = Database.database().reference().child("CER_drivers").child(driverId)
                 userRef.updateChildValues(["trackerId": uid], withCompletionBlock: { (error, reference) in
                     if error != nil {
@@ -104,9 +104,8 @@ class AddUserController: UIViewController {
             }
         }, withCancel: nil)
     }
-    
     func checkIfEmailTextFieldIsEmpty() {
-        if emailTextField.text == "" || emailTextField.text == nil {
+        if phoneTextField.text == "" || phoneTextField.text == nil {
             createAlert(title: "Invalid Entry.", message: "Please enter a valid email address.")
         }
     }
@@ -114,10 +113,13 @@ class AddUserController: UIViewController {
     func removeFromPendingAndAddToDispatcherUID(uid: String) {
         
         if let driverId = driver.userId {
+            print(driver.userId, driver.phone)
+            guard let phoneNumber = driver.phone else {return}
             let companyDriversFanRef = Database.database().reference().child("CER_company_drivers").child("\(uid)")
-            companyDriversFanRef.updateChildValues([driverId: driver.email])
+            companyDriversFanRef.updateChildValues([driverId: phoneNumber])
             let pendingFanRef = Database.database().reference().child("CER_Pending_Drivers").child(driverId)
             pendingFanRef.removeValue()
+            self.phoneTextField.text = nil
             self.createAlert(title: "Driver Added", message: "Check him in your list of drivers.")
         }
     }

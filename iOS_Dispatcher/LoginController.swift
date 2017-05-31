@@ -93,6 +93,7 @@ class LoginController: UIViewController {
     
     func setupViews() {
         view.backgroundColor = .white
+        self.dismissKeyboard()
         
         view.addSubview(emailTextField)
         view.addSubview(passwordTextField)

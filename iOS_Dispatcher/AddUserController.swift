@@ -62,6 +62,7 @@ class AddUserController: UIViewController {
     }
     
     func setupViews() {
+        self.dismissKeyboard()
         view.addSubview(phoneTextField)
         view.addSubview(trackerIdTextField)
         view.addSubview(addUserButton)
